@@ -12,13 +12,18 @@ type alias Point =
     { x : Int, y : Int }
 
 
+type alias Board a =
+    List (List a)
+
+
 type alias Model =
-    List (List Bool)
+    { board : Board Bool
+    }
 
 
 default : Model
 default =
-    List.repeat 100 (List.repeat 100 False)
+    { board = List.repeat 100 (List.repeat 100 False) }
 
 
 init : ( Model, Cmd Msg )
@@ -44,10 +49,10 @@ update msg model =
             ( model, Cmd.none )
 
         ToggleCell point ->
-            ( toggleCells point model, Cmd.none )
+            ( { board = toggleCells point model.board }, Cmd.none )
 
 
-toggleCells : Point -> Model -> Model
+toggleCells : Point -> Board Bool -> Board Bool
 toggleCells point cells =
     List.indexedMap (toggleRow point) cells
 
@@ -112,7 +117,7 @@ view : Model -> Html Msg
 view model =
     Html.table
         []
-        (List.indexedMap drawItems model)
+        (List.indexedMap drawItems model.board)
 
 
 
