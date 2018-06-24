@@ -2,20 +2,28 @@ module Main exposing (..)
 
 import Html exposing (Html)
 import Html.Attributes
+import Html.Events exposing (onClick)
 
 
 -- MODEL
 
 
+type alias Point =
+    { x : Int, y : Int }
+
+
 type alias Model =
-    List (List Int)
+    List (List Bool)
+
+
+default : Model
+default =
+    List.repeat 100 (List.repeat 100 False)
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( [ [ 0, 1 ]
-      , [ 1, 0 ]
-      ]
+    ( default
     , Cmd.none
     )
 
@@ -26,7 +34,7 @@ init =
 
 type Msg
     = NoOp
-    | ToggleCell Int Int
+    | ToggleCell Point
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -35,50 +43,76 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        _ ->
-            ( model, Cmd.none )
+        ToggleCell point ->
+            ( toggleCells point model, Cmd.none )
+
+
+toggleCells : Point -> Model -> Model
+toggleCells point cells =
+    List.indexedMap (toggleRow point) cells
+
+
+toggleRow : Point -> Int -> List Bool -> List Bool
+toggleRow point index row =
+    if index == point.y then
+        List.indexedMap (toggleItem point) row
+    else
+        row
+
+
+toggleItem : Point -> Int -> Bool -> Bool
+toggleItem point index item =
+    if index == point.x then
+        not item
+    else
+        item
 
 
 
 -- VIEW
 
 
-drawItems : List Int -> Html Msg
-drawItems m =
-    Html.tr [] (List.map drawItem m)
+drawItems : Int -> List Bool -> Html Msg
+drawItems y m =
+    Html.tr [] (List.indexedMap (drawItem y) m)
 
 
-wrapInDiv : Html Msg -> Html Msg
-wrapInDiv a =
+wrapInDiv : Point -> Html Msg -> Html Msg
+wrapInDiv point a =
     Html.td
-        [ Html.Attributes.height 20
+        [ onClick (ToggleCell point)
+        , Html.Attributes.height 20
         , Html.Attributes.width 20
         ]
         [ a ]
 
 
-drawItem : Int -> Html Msg
-drawItem i =
-    wrapInDiv
-        (case i of
-            0 ->
-                Html.p [ Html.Attributes.class "Nothing", Html.Attributes.height 20, Html.Attributes.width 20 ] []
+drawItem : Int -> Int -> Bool -> Html Msg
+drawItem y x i =
+    let
+        point =
+            { x = x, y = y }
+    in
+        wrapInDiv point
+            (case i of
+                False ->
+                    Html.p [ Html.Attributes.class "Nothing", Html.Attributes.height 20, Html.Attributes.width 20 ] []
 
-            _ ->
-                Html.img
-                    [ Html.Attributes.src "./img/elm.png"
-                    , Html.Attributes.width 20
-                    , Html.Attributes.height 20
-                    ]
-                    []
-        )
+                _ ->
+                    Html.img
+                        [ Html.Attributes.src "./img/elm.png"
+                        , Html.Attributes.width 20
+                        , Html.Attributes.height 20
+                        ]
+                        []
+            )
 
 
 view : Model -> Html Msg
 view model =
     Html.table
         []
-        (List.map drawItems model)
+        (List.indexedMap drawItems model)
 
 
 
